@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FaTrash, FaMinus, FaPlus, } from 'react-icons/fa';
+import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
+import orders, { Order, OrderItem, ShippingInfo } from '../data/orders';
 
 interface Producto {
   name: string;
@@ -55,9 +56,32 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
   };
 
   const handleSubmitOrder = () => {
-    // Aquí se enviaría la orden al backend
+    // Crear un nuevo pedido
+    const newOrder: Order = {
+      id: `ORD-${String(orders.length + 1).padStart(3, '0')}`,
+      date: new Date().toISOString(),
+      shippingInfo: shippingInfo as ShippingInfo,
+      items: items.map(item => ({
+        name: item.name,
+        img: item.img,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      subtotal,
+      shippingCost,
+      total,
+      status: 'pendiente'
+    };
+
+    // Añadir el pedido al array de pedidos
+    orders.push(newOrder);
+    
+    // Mostrar confirmación al usuario
     alert('¡Gracias por tu compra! Tu pedido ha sido procesado.');
     onClose();
+    
+    // En una aplicación real, aquí enviaríamos la orden a una API
+    console.log("Nuevo pedido creado:", newOrder);
   };
 
   // Validar formulario de envío
