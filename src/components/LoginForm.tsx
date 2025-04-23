@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import users from "../data/users";
 
 interface LoginFormProps {
@@ -15,6 +16,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
+	const navigate = useNavigate();
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -34,6 +36,13 @@ const LoginForm: React.FC<LoginFormProps> = ({
 			// Login exitoso
 			onLogin({ id: user.id, user: user.user, name: user.name });
 			onClose();
+			
+			// Si el usuario es admin, redirigir al dashboard
+			if (user.user === "admin") {
+				setTimeout(() => {
+					navigate("/dashboard");
+				}, 100); // pequeño retraso para asegurar que el estado se actualice
+			}
 		} else {
 			setError("Usuario o contraseña incorrectos.");
 		}
