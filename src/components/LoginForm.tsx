@@ -52,7 +52,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 		<div className="modal-content">
 			<div className="modal-header">
 				<h5 className="modal-title">Iniciar Sesión</h5>
-				<button type="button" className="btn-close" onClick={onClose}></button>
+				<button type="button" className="btn-close" onClick={onClose} />
 			</div>
 			<div className="modal-body">
 				{error && <div className="alert alert-danger">{error}</div>}
@@ -92,6 +92,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
 				<p className="mb-0">
 					¿No tienes una cuenta?{" "}
 					<button
+						type="button"
 						className="btn btn-link p-0 text-danger"
 						onClick={onSwitchToRegister}
 					>

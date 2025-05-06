@@ -2,7 +2,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import { FaHome, FaSignOutAlt, FaUserCog, FaTachometerAlt, FaEye, FaEdit, FaTrash, FaFilter, FaSearch } from "react-icons/fa";
 import mariaLogo from "../assets/maria_logo.svg";
-import orders, { Order } from "../data/orders";
+import orders from "../data/orders";
+import type { Order } from "../data/orders";
 
 interface AuthUser {
   id: string;
@@ -601,7 +602,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ currentUser, onLogout }) 
         </div>
       </footer>
 
-      {/* Modal para editar estado */}
       {renderEditStatusModal()}
     </>
   );

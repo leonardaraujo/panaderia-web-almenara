@@ -58,7 +58,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 		<div className="modal-content">
 			<div className="modal-header">
 				<h5 className="modal-title">Crear Cuenta</h5>
-				<button type="button" className="btn-close" onClick={onClose}></button>
+				<button type="button" className="btn-close" onClick={onClose} />
 			</div>
 			<div className="modal-body">
 				{error && <div className="alert alert-danger">{error}</div>}
@@ -122,6 +122,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
 				<p className="mb-0">
 					¿Ya tienes una cuenta?{" "}
 					<button
+						type="button"
 						className="btn btn-link p-0 text-danger"
 						onClick={onSwitchToLogin}
 					>
