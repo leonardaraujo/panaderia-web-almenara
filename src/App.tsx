@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import {
+	Routes,
+	Route,
+	Navigate,
+	useNavigate,
+	useLocation,
+} from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import DashboardPage from "./pages/DashboardPage";
+import DashboardPage from "./pages/admin/DashboardPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 // Definición de la interfaz para usuario autenticado
@@ -13,7 +19,7 @@ interface AuthUser {
 
 function App() {
 	// Estado para usuario autenticado
-	const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+	const [currentUser] = useState<AuthUser | null>(null);
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -24,39 +30,10 @@ function App() {
 		}
 	}, [currentUser, navigate, location.pathname]);
 
-	// Manejar inicio de sesión
-	const handleLogin = (userData: AuthUser) => {
-		setCurrentUser(userData);
-	};
-
-	// Manejar registro
-	const handleRegister = (userData: AuthUser) => {
-		setCurrentUser(userData);
-	};
-
-	// Manejar cierre de sesión
-	const handleLogout = () => {
-		setCurrentUser(null);
-		navigate("/");
-	};
-
 	return (
 		<Routes>
-			<Route 
-				path="/" 
-				element={
-					<HomePage 
-						currentUser={currentUser}
-						onLogin={handleLogin}
-						onRegister={handleRegister}
-						onLogout={handleLogout}
-					/>
-				} 
-			/>
-			<Route 
-				path="/dashboard" 
-				element={<DashboardPage currentUser={currentUser} onLogout={handleLogout} />}
-			/>
+			<Route path="/" element={<HomePage />} />
+			<Route path="/dashboard" element={<DashboardPage />} />
 			<Route path="/404" element={<NotFoundPage />} />
 			<Route path="*" element={<Navigate to="/404" replace />} />
 		</Routes>
