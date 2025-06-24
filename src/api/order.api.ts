@@ -45,6 +45,7 @@ export interface SaleOrder {
   total: number;
   createdAt?: string;
   updatedAt?: string;
+  date:string
 }
 
 // API Methods

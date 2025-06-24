@@ -16,6 +16,14 @@ interface ProductCatalogProps {
 // Tipo para el estado de ordenamiento
 type SortOrder = "none" | "asc" | "desc";
 
+// Tipo para productos locales (estructura actual en products.ts)
+interface LocalProduct {
+  name: string;
+  img: string;
+  text: string;
+  price: number;
+}
+
 // Categorías disponibles (nombre visible y clave)
 const AVAILABLE_CATEGORIES = [
   { key: "todos", name: "Todos" },
@@ -24,6 +32,17 @@ const AVAILABLE_CATEGORIES = [
   { key: "cakes", name: "Tortas" },
   { key: "gift_boxes", name: "Cajas Regalo" },
 ];
+
+// Función para convertir productos locales al formato Product
+const adaptLocalProductsToProduct = (localProducts: LocalProduct[], startId: number = 1): Product[] => {
+  return localProducts.map((product, index) => ({
+    id: startId + index,
+    name: product.name,
+    imgUrl: product.img, // Mapear img a imgUrl
+    text: product.text,
+    price: product.price,
+  }));
+};
 
 const ProductCatalog: React.FC<ProductCatalogProps> = ({
   onAddToCart,
@@ -95,7 +114,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
         // Convertir productos de la API al formato usado en la aplicación
         const formattedProducts = response.products.map(
           (apiProduct: ApiProduct) => ({
-            id: apiProduct.id, // <-- AGREGA ESTA LÍNEA
+            id: apiProduct.id,
             name: apiProduct.name,
             imgUrl: apiProduct.imgUrl,
             text: apiProduct.description,
@@ -110,15 +129,38 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
         setError(
           "No se pudieron cargar los productos. Por favor, intente de nuevo más tarde."
         );
+        
         // Usar los productos locales como fallback si están disponibles
         if (categoriaSeleccionada !== "todos") {
           const localProducts =
             productos.categorias[
               categoriaSeleccionada as keyof typeof productos.categorias
             ] || [];
-          setApiProducts(localProducts);
+          
+          // Transformar productos locales al formato Product
+          const transformedLocalProducts = adaptLocalProductsToProduct(
+            localProducts as LocalProduct[], 
+            Date.now()
+          );
+          
+          setApiProducts(transformedLocalProducts);
+          setTotalPages(1); // Solo una página para productos locales
         } else {
-          setApiProducts([]);
+          // Para "todos", obtener todos los productos locales de todas las categorías
+          const allLocalProducts: Product[] = [];
+          let idCounter = Date.now();
+          
+          Object.values(productos.categorias).forEach((category) => {
+            const transformedProducts = adaptLocalProductsToProduct(
+              category as LocalProduct[], 
+              idCounter
+            );
+            allLocalProducts.push(...transformedProducts);
+            idCounter += category.length; // Incrementar ID base para la siguiente categoría
+          });
+          
+          setApiProducts(allLocalProducts);
+          setTotalPages(1); // Solo una página para productos locales
         }
       } finally {
         setIsLoading(false);
@@ -317,7 +359,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
                 sortedProducts.map((producto: Product, index: number) => (
                   <div
                     className="col-md-4 mb-4"
-                    key={`${producto.name}-${index}`}
+                    key={`${producto.id}-${producto.name}-${index}`} // Usar ID único
                   >
                     <div className="card h-100">
                       <img

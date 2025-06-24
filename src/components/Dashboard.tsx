@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { FaEye, FaEdit, FaTrash, FaFilter, FaSearch } from "react-icons/fa";
+import { FaEye, FaEdit, FaTrash, FaFilter, FaSearch, FaSpinner } from "react-icons/fa";
 import orders, { Order } from "../data/orders";
-import { getAllOrders, SaleOrder } from "../api/order.api";
+import { getAllOrders } from "../api/order.api";
+
 interface DashboardProps {
   onClose: () => void;
 }
@@ -17,18 +18,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
+    
     getAllOrders()
-      .then((response) => {
+      .then((response: any) => {
         // Si usas axios, los datos están en response.data
         setOrdersList(response.data ?? response);
-        setLoading(false);
         console.log("Respuesta de la API de pedidos:", response);
       })
-      .catch((err) => {
-        setError("Error al cargar los pedidos");
+      .catch((error) => {
+        console.error("Error al cargar los pedidos:", error);
+        setError("Error al cargar los pedidos desde la API");
+        // En caso de error, usar solo los datos locales
+        setOrdersList(orders);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
+
   // Función para filtrar pedidos
   const filteredOrders = ordersList.filter((order) => {
     // Filtrar por estado
@@ -101,6 +109,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
         return "bg-secondary";
     }
   };
+
+  // Componente de loading
+  const renderLoadingState = () => (
+    <div className="d-flex justify-content-center align-items-center py-5">
+      <div className="text-center">
+        <FaSpinner className="fa-spin fa-2x text-primary mb-3" />
+        <p className="text-muted">Cargando pedidos...</p>
+      </div>
+    </div>
+  );
+
+  // Componente de error
+  const renderErrorState = () => (
+    <div className="alert alert-warning" role="alert">
+      <strong>Atención:</strong> {error}
+    </div>
+  );
 
   // Renderizar la vista de dashboard principal
   const renderDashboardView = () => (
@@ -198,7 +223,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
+      {/* Mostrar error si existe */}
+      {error && renderErrorState()}
+
+      {/* Mostrar loading, tabla vacía o tabla con datos */}
+      {loading ? (
+        renderLoadingState()
+      ) : filteredOrders.length === 0 ? (
         <div className="alert alert-info">
           No se encontraron pedidos con los criterios seleccionados.
         </div>
@@ -267,6 +298,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
       )}
     </>
   );
+
+  // ... resto del código permanece igual (renderOrderDetailView, renderEditStatusModal, return)
 
   // Renderizar vista detallada de un pedido
   const renderOrderDetailView = () => {
@@ -512,9 +545,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
                         ? "btn-warning"
                         : "btn-outline-warning"
                     }`}
-                    onClick={() =>
-                      handleStatusChange(editingOrder.id, "pendiente")
-                    }
+                    onClick={() => {
+                      handleStatusChange(editingOrder.id, "pendiente");
+                      setEditingOrder(null);
+                    }}
                   >
                     Pendiente
                   </button>
@@ -524,9 +558,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
                         ? "btn-primary"
                         : "btn-outline-primary"
                     }`}
-                    onClick={() =>
-                      handleStatusChange(editingOrder.id, "en proceso")
-                    }
+                    onClick={() => {
+                      handleStatusChange(editingOrder.id, "en proceso");
+                      setEditingOrder(null);
+                    }}
                   >
                     En proceso
                   </button>
@@ -536,9 +571,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
                         ? "btn-info"
                         : "btn-outline-info"
                     }`}
-                    onClick={() =>
-                      handleStatusChange(editingOrder.id, "enviado")
-                    }
+                    onClick={() => {
+                      handleStatusChange(editingOrder.id, "enviado");
+                      setEditingOrder(null);
+                    }}
                   >
                     Enviado
                   </button>
@@ -548,9 +584,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
                         ? "btn-success"
                         : "btn-outline-success"
                     }`}
-                    onClick={() =>
-                      handleStatusChange(editingOrder.id, "entregado")
-                    }
+                    onClick={() => {
+                      handleStatusChange(editingOrder.id, "entregado");
+                      setEditingOrder(null);
+                    }}
                   >
                     Entregado
                   </button>
@@ -560,9 +597,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onClose }) => {
                         ? "btn-danger"
                         : "btn-outline-danger"
                     }`}
-                    onClick={() =>
-                      handleStatusChange(editingOrder.id, "cancelado")
-                    }
+                    onClick={() => {
+                      handleStatusChange(editingOrder.id, "cancelado");
+                      setEditingOrder(null);
+                    }}
                   >
                     Cancelado
                   </button>

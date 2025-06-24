@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaIdCard } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
 import useUserStore from "../../store/userStore";
 
 interface MyProfileProps {

@@ -11,11 +11,13 @@ import useUserStore from "../../store/userStore";
 import authApi from "../api/auth.api";
 import type { Product } from "../domain/IProduct";
 import MyOrders from "../components/MyOrders";
-// Definición de la interfaz para elementos del carrito
+import MyProfile from "../components/MyProfile";
+
+// Definición de la interfaz para elementos del carrito (sincronizada con ShoppingCart)
 interface CartItem extends Product {
+  id: number;
   quantity: number;
 }
-import MyProfile from "../components/MyProfile";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -61,7 +63,7 @@ const HomePage: React.FC = () => {
     navigate("/dashboard");
   };
 
-  // Función para añadir productos al carrito
+  // Función para añadir productos al carrito (ACTUALIZADA)
   const addToCart = (producto: Product) => {
     // No permitir añadir productos al carrito si es admin
     if (isAdmin) return;
@@ -80,8 +82,14 @@ const HomePage: React.FC = () => {
             : item
         );
       } else {
-        // Si no existe, añadirlo con cantidad 1
-        return [...prevItems, { ...producto, quantity: 1 }];
+        // Si no existe, añadirlo con cantidad 1 y generar un ID único
+        // Usaremos el timestamp como ID temporal hasta que se obtenga el ID real del producto
+        const newCartItem: CartItem = {
+          ...producto,
+          id: producto.id || Date.now(), // Usar el ID del producto o timestamp como fallback
+          quantity: 1,
+        };
+        return [...prevItems, newCartItem];
       }
     });
   };

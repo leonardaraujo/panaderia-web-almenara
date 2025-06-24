@@ -48,7 +48,7 @@ const MyOrders: React.FC<MyOrdersProps> = ({ show, onClose }) => {
         return;
       }
       
-      const response = await getOrdersByUserId(user.id);
+      const response:any = await getOrdersByUserId(user.id);
       setOrders(response.data ?? response);
       setLoading(false);
     } catch (err) {

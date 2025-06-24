@@ -85,7 +85,7 @@ const DashboardPage: React.FC = () => {
     }
     setLoading(true);
     getAllOrders()
-      .then((response) => {
+      .then((response:any) => {
         const orders = response.data ?? response;
         
         // Calcular subtotal, shippingCost y total si no vienen del backend

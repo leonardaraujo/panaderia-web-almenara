@@ -1,7 +1,8 @@
 // Actualizada la interfaz para coincidir con ProductCatalog
 export interface Product {
+    id: number;
     name: string;
-    imgUrl: string; // Cambiado de 'img' a 'imgUrl'
+    imgUrl: string;
     text: string;
     price: number;
 }

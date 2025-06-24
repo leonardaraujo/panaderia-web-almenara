@@ -92,7 +92,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             
             // Registro exitoso - ahora iniciar sesión con las credenciales
             try {
-                const loginResponse = await authApi.login({ email, password });
+                await authApi.login({ email, password });
                 
                 // Otra opción sería usar loginWithRegisterResponse si quieres mantener todos los datos
                 // const token = loginResponse.token;
