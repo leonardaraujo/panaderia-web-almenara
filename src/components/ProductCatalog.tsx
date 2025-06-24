@@ -2,21 +2,19 @@ import React, { useState, useEffect } from "react";
 import productos from "../data/products";
 import productsApi, { Product as ApiProduct } from "../api/products.api";
 import type { Product } from "../domain/IProduct";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"; // Importar iconos de Lucide
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { FaSpinner } from "react-icons/fa";
 import useUserStore from "../../store/userStore";
 
 interface ProductCatalogProps {
   onAddToCart: (producto: Product) => void;
-  // Configuración opcional para mostrar/ocultar pestañas específicas
   config?: {
     showCategories?: string[];
   };
 }
 
-// Tipo para el estado de ordenamiento
 type SortOrder = "none" | "asc" | "desc";
 
-// Tipo para productos locales (estructura actual en products.ts)
 interface LocalProduct {
   name: string;
   img: string;
@@ -24,7 +22,6 @@ interface LocalProduct {
   price: number;
 }
 
-// Categorías disponibles (nombre visible y clave)
 const AVAILABLE_CATEGORIES = [
   { key: "todos", name: "Todos" },
   { key: "birthday", name: "Cumpleaños" },
@@ -33,51 +30,101 @@ const AVAILABLE_CATEGORIES = [
   { key: "gift_boxes", name: "Cajas Regalo" },
 ];
 
-// Función para convertir productos locales al formato Product
 const adaptLocalProductsToProduct = (localProducts: LocalProduct[], startId: number = 1): Product[] => {
   return localProducts.map((product, index) => ({
     id: startId + index,
     name: product.name,
-    imgUrl: product.img, // Mapear img a imgUrl
+    imgUrl: product.img,
     text: product.text,
     price: product.price,
   }));
+};
+
+// Componente para manejar la carga de imágenes con spinner
+const ProductImage: React.FC<{
+  src: string;
+  alt: string;
+  className?: string;
+  style?: React.CSSProperties;
+}> = ({ src, alt, className, style }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+  };
+
+  return (
+    <div className="position-relative" style={style}>
+      {imageLoading && (
+        <div 
+          className="position-absolute top-50 start-50 translate-middle d-flex align-items-center justify-content-center"
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            backgroundColor: '#f8f9fa',
+            zIndex: 1 
+          }}
+        >
+          <FaSpinner className="fa-spin text-muted" size={24} />
+        </div>
+      )}
+      {imageError ? (
+        <div 
+          className="d-flex align-items-center justify-content-center text-muted"
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            backgroundColor: '#f8f9fa',
+            fontSize: '0.8rem',
+            textAlign: 'center',
+            padding: '10px'
+          }}
+        >
+          Imagen no disponible
+        </div>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          style={{
+            ...style,
+            display: imageLoading ? 'none' : 'block'
+          }}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
+      )}
+    </div>
+  );
 };
 
 const ProductCatalog: React.FC<ProductCatalogProps> = ({
   onAddToCart,
   config,
 }) => {
-  // Verificar si el usuario es admin
   const isAdmin = useUserStore((state) => state.isAdmin());
-
-  // Estado para la categoría seleccionada (incluye "todos" como opción)
-  const [categoriaSeleccionada, setCategoriaSeleccionada] =
-    useState<string>("todos");
-
-  // Estado para seguir qué productos se añadieron recientemente
-  const [addedProducts, setAddedProducts] = useState<Record<string, boolean>>(
-    {}
-  );
-
-  // Estados para productos de la API
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todos");
+  const [addedProducts, setAddedProducts] = useState<Record<string, boolean>>({});
   const [apiProducts, setApiProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-
-  // Estado para ordenamiento por precio
   const [sortOrder, setSortOrder] = useState<SortOrder>("none");
 
-  // Determinar qué categorías mostrar
   const visibleCategories = config?.showCategories
     ? AVAILABLE_CATEGORIES.filter((cat) =>
         config.showCategories?.includes(cat.key)
       )
     : AVAILABLE_CATEGORIES;
 
-  // Cargar productos desde la API
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
@@ -86,13 +133,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
         let response;
 
         if (categoriaSeleccionada === "todos") {
-          // Obtener todos los productos
           response = await productsApi.getProducts({
             page: currentPage,
             limit: 12,
           });
         } else {
-          // Mapeo actualizado para enviar el nombre exacto que necesitas
           const categoryNames: Record<string, string> = {
             birthday: "birthday",
             catering: "catering",
@@ -111,7 +156,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
           });
         }
 
-        // Convertir productos de la API al formato usado en la aplicación
         const formattedProducts = response.products.map(
           (apiProduct: ApiProduct) => ({
             id: apiProduct.id,
@@ -130,23 +174,20 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
           "No se pudieron cargar los productos. Por favor, intente de nuevo más tarde."
         );
         
-        // Usar los productos locales como fallback si están disponibles
         if (categoriaSeleccionada !== "todos") {
           const localProducts =
             productos.categorias[
               categoriaSeleccionada as keyof typeof productos.categorias
             ] || [];
           
-          // Transformar productos locales al formato Product
           const transformedLocalProducts = adaptLocalProductsToProduct(
             localProducts as LocalProduct[], 
             Date.now()
           );
           
           setApiProducts(transformedLocalProducts);
-          setTotalPages(1); // Solo una página para productos locales
+          setTotalPages(1);
         } else {
-          // Para "todos", obtener todos los productos locales de todas las categorías
           const allLocalProducts: Product[] = [];
           let idCounter = Date.now();
           
@@ -156,11 +197,11 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
               idCounter
             );
             allLocalProducts.push(...transformedProducts);
-            idCounter += category.length; // Incrementar ID base para la siguiente categoría
+            idCounter += category.length;
           });
           
           setApiProducts(allLocalProducts);
-          setTotalPages(1); // Solo una página para productos locales
+          setTotalPages(1);
         }
       } finally {
         setIsLoading(false);
@@ -170,16 +211,14 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
     fetchProducts();
   }, [categoriaSeleccionada, currentPage]);
 
-  // Función para cambiar el orden de los productos
   const toggleSortOrder = () => {
     setSortOrder((prevOrder) => {
       if (prevOrder === "none") return "asc";
       if (prevOrder === "asc") return "desc";
-      return "none"; // Si es desc, volver a none
+      return "none";
     });
   };
 
-  // Obtener productos ordenados según el estado actual
   const getSortedProducts = () => {
     if (sortOrder === "none") return apiProducts;
 
@@ -192,7 +231,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
     });
   };
 
-  // Obtener el icono adecuado según el estado de ordenamiento
   const getSortIcon = () => {
     switch (sortOrder) {
       case "asc":
@@ -204,18 +242,14 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
     }
   };
 
-  // Función para manejar la adición de productos al carrito con animación
   const handleAddToCart = (producto: Product) => {
-    // No permitir añadir productos si es admin
     if (isAdmin) return;
     
-    // Marcar el producto como agregado
     setAddedProducts((prev) => ({
       ...prev,
       [producto.name]: true,
     }));
 
-    // Restablecer el estado del botón después de 1.5 segundos
     setTimeout(() => {
       setAddedProducts((prev) => ({
         ...prev,
@@ -223,11 +257,9 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
       }));
     }, 1500);
 
-    // Llamar a la función callback proporcionada por el padre
     onAddToCart(producto);
   };
 
-  // Funciones para la paginación
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -240,12 +272,12 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
     }
   };
 
-  // Componente de esqueleto para usar durante la carga
+  // Componente de esqueleto mejorado
   const ProductSkeleton = () => (
     <div className="col-md-4 mb-4">
       <div className="card h-100">
-        <div className="bg-light placeholder-glow" style={{ height: "200px" }}>
-          <span className="placeholder col-12 h-100"></span>
+        <div className="d-flex align-items-center justify-content-center bg-light" style={{ height: "200px" }}>
+          <FaSpinner className="fa-spin text-muted" size={30} />
         </div>
         <div className="card-body d-flex flex-column">
           <h5 className="card-title placeholder-glow">
@@ -270,7 +302,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
     </div>
   );
 
-  // Productos ordenados según el estado actual
   const sortedProducts = getSortedProducts();
 
   return (
@@ -289,7 +320,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
               }`}
               onClick={() => {
                 setCategoriaSeleccionada(categoria.key);
-                setCurrentPage(1); // Resetear a la primera página al cambiar categoría
+                setCurrentPage(1);
               }}
             >
               {categoria.name}
@@ -298,18 +329,15 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
         </div>
       </div>
 
-      {/* Mensaje de error si falla la carga desde la API */}
       {error && (
         <div className="alert alert-warning mb-4" role="alert">
           {error}
         </div>
       )}
 
-      {/* Contenedor principal de productos - se mantiene con la misma altura durante la carga */}
       <div className="productos-container" style={{ minHeight: "800px" }}>
         {isLoading ? (
           <div className="row">
-            {/* Esqueletos de productos durante la carga - sin spinner adicional */}
             {Array(12)
               .fill(0)
               .map((_, index) => (
@@ -318,7 +346,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
           </div>
         ) : (
           <>
-            {/* Barra de filtros y ordenamiento */}
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 {apiProducts.length > 0 && (
@@ -328,7 +355,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
                 )}
               </div>
 
-              {/* Botón de ordenamiento por precio */}
               <button
                 className={`btn ${
                   sortOrder !== "none" ? "btn-danger" : "btn-outline-danger"
@@ -353,25 +379,19 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
               </button>
             </div>
 
-            {/* Tarjetas de Productos */}
             <div className="row">
               {sortedProducts.length > 0 ? (
                 sortedProducts.map((producto: Product, index: number) => (
                   <div
                     className="col-md-4 mb-4"
-                    key={`${producto.id}-${producto.name}-${index}`} // Usar ID único
+                    key={`${producto.id}-${producto.name}-${index}`}
                   >
                     <div className="card h-100">
-                      <img
+                      <ProductImage
                         src={producto.imgUrl}
-                        className="card-img-top"
                         alt={producto.name}
+                        className="card-img-top"
                         style={{ height: "200px", objectFit: "cover" }}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src =
-                            "https://via.placeholder.com/200x200?text=Imagen+No+Disponible";
-                        }}
                       />
                       <div className="card-body d-flex flex-column">
                         <h5 className="card-title">{producto.name}</h5>
@@ -381,7 +401,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
                             S/ {producto.price.toFixed(2)}
                           </h5>
                           
-                          {/* Botón condicional basado en si el usuario es administrador */}
                           {isAdmin ? (
                             <button
                               className="btn btn-outline-secondary"
@@ -420,7 +439,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
         )}
       </div>
 
-      {/* Paginación (visible cuando hay más de una página y no está cargando) */}
       {!isLoading && totalPages > 1 && (
         <div className="d-flex justify-content-center mt-4 mb-5">
           <nav aria-label="Navegación de páginas de productos">
@@ -437,7 +455,6 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({
                 </button>
               </li>
 
-              {/* Mostrar número de página actual */}
               <li className="page-item active">
                 <span className="page-link">
                   Página {currentPage} de {totalPages}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaSpinner, FaInfoCircle } from "react-icons/fa";
+import { FaSpinner, FaInfoCircle, FaArrowLeft } from "react-icons/fa";
 import useUserStore from "../../store/userStore";
 import { getOrdersByUserId, SaleOrder } from "../api/order.api";
 
@@ -25,12 +25,8 @@ const MyOrders: React.FC<MyOrdersProps> = ({ show, onClose }) => {
   // Bloquear el scroll del body cuando se abre el modal
   useEffect(() => {
     if (show) {
-      // Guardar el valor original de overflow
       const originalStyle = window.getComputedStyle(document.body).overflow;
-      // Bloquear el scroll
       document.body.style.overflow = "hidden";
-
-      // Restaurar el scroll cuando se desmonta el componente o cierra el modal
       return () => {
         document.body.style.overflow = originalStyle;
       };
@@ -170,30 +166,31 @@ const MyOrders: React.FC<MyOrdersProps> = ({ show, onClose }) => {
     }
 
     return (
-      <div className="list-group">
+      <div className="order-list">
         {orders.map((order) => (
-          <button
+          <div
             key={order.id}
-            className="list-group-item list-group-item-action"
+            className="order-card"
             onClick={() => setSelectedOrder(order)}
           >
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <h6 className="mb-1">Pedido #{order.id}</h6>
-                <p className="mb-1 text-muted small">
-                  {formatDate(order.date)}
-                </p>
+            <div className="order-card-header">
+              <div className="order-info">
+                <h6 className="order-number">Pedido #{order.id}</h6>
+                <p className="order-date">{formatDate(order.date)}</p>
               </div>
-              <div className="text-end">
-                <div className="mb-1">
-                  <span className={`badge ${getStatusBadgeClass(order.status)}`}>
-                    {translateStatus(order.status)}
-                  </span>
-                </div>
-                <div>S/ {calculateOrderTotal(order).toFixed(2)}</div>
+              <div className="order-status-price">
+                <span className={`badge ${getStatusBadgeClass(order.status)} mb-2`}>
+                  {translateStatus(order.status)}
+                </span>
+                <div className="order-total">S/ {calculateOrderTotal(order).toFixed(2)}</div>
               </div>
             </div>
-          </button>
+            <div className="order-preview">
+              <span className="text-muted small">
+                {order.items.length} producto{order.items.length > 1 ? 's' : ''} • {translateDeliveryMethod(order.deliveryMethod)}
+              </span>
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -211,127 +208,113 @@ const MyOrders: React.FC<MyOrdersProps> = ({ show, onClose }) => {
 
     return (
       <>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h5 className="m-0">
-            Detalles del Pedido #{selectedOrder.id}
-          </h5>
+        <div className="order-detail-header">
           <button
             type="button"
-            className="btn btn-sm btn-outline-secondary"
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center"
             onClick={() => setSelectedOrder(null)}
           >
-            Volver a la lista
+            <FaArrowLeft className="me-2" size={12} />
+            <span className="d-none d-sm-inline">Volver a la lista</span>
+            <span className="d-inline d-sm-none">Volver</span>
           </button>
+          <h5 className="order-detail-title">
+            <span className="d-none d-sm-inline">Detalles del Pedido #{selectedOrder.id}</span>
+            <span className="d-inline d-sm-none">Pedido #{selectedOrder.id}</span>
+          </h5>
         </div>
 
-        <div className="mb-3 p-3 bg-light rounded">
-          <div className="d-flex justify-content-between mb-2">
+        <div className="order-info-card">
+          <div className="info-row">
             <span>Estado:</span>
             <span className={`badge ${getStatusBadgeClass(selectedOrder.status)}`}>
               {translateStatus(selectedOrder.status)}
             </span>
           </div>
-          <div className="d-flex justify-content-between mb-2">
+          <div className="info-row">
             <span>Fecha:</span>
-            <span>{formatDate(selectedOrder.date)}</span>
+            <span className="text-end">{formatDate(selectedOrder.date)}</span>
           </div>
-          <div className="d-flex justify-content-between mb-2">
+          <div className="info-row">
             <span>Método de entrega:</span>
-            <span>{translateDeliveryMethod(selectedOrder.deliveryMethod)}</span>
+            <span className="text-end">{translateDeliveryMethod(selectedOrder.deliveryMethod)}</span>
           </div>
-          <div className="d-flex justify-content-between mb-2">
+          <div className="info-row">
             <span>Dirección:</span>
-            <span className="text-end">{selectedOrder.shippingInfo}</span>
+            <span className="text-end small">{selectedOrder.shippingInfo}</span>
           </div>
-          <div className="d-flex justify-content-between">
+          <div className="info-row">
             <span>Método de pago:</span>
-            <span>{translatePaymentMethod(selectedOrder.paymentMethod)}</span>
+            <span className="text-end">{translatePaymentMethod(selectedOrder.paymentMethod)}</span>
           </div>
         </div>
 
-        <div className="card mb-3">
-          <div className="card-header bg-light">
-            <h6 className="m-0">Productos</h6>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-borderless mb-0">
-                <thead>
-                  <tr className="table-light">
-                    <th>Producto</th>
-                    <th className="text-center">Cantidad</th>
-                    <th className="text-end">Precio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedOrder.items.map((item, index) => (
-                    <tr key={index}>
-                      <td>
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={item.product?.imgUrl}
-                            alt={item.product?.name}
-                            className="me-2 rounded"
-                            style={{ width: "48px", height: "48px", objectFit: "cover" }}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src =
-                                "https://via.placeholder.com/48?text=Imagen+No+Disponible";
-                            }}
-                          />
-                          <div>{item.product?.name}</div>
-                        </div>
-                      </td>
-                      <td className="text-center">{item.quantity}</td>
-                      <td className="text-end">S/ {item.price.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="products-section">
+          <h6 className="section-title">Productos</h6>
+          <div className="products-list">
+            {selectedOrder.items.map((item, index) => (
+              <div key={index} className="product-item">
+                <div className="product-image">
+                  <img
+                    src={item.product?.imgUrl}
+                    alt={item.product?.name}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.innerHTML = "Sin imagen";
+                        parent.style.fontSize = "0.7rem";
+                        parent.style.color = "#6c757d";
+                      }
+                    }}
+                  />
+                </div>
+                <div className="product-details">
+                  <div className="product-name">{item.product?.name}</div>
+                  <div className="product-quantity">Cantidad: {item.quantity}</div>
+                </div>
+                <div className="product-price">
+                  S/ {(item.price * item.quantity).toFixed(2)}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="card mb-3">
-          <div className="card-header bg-light">
-            <h6 className="m-0">Resumen</h6>
+        <div className="summary-section">
+          <h6 className="section-title">Resumen</h6>
+          <div className="summary-item">
+            <span>Subtotal:</span>
+            <span>S/ {subtotal.toFixed(2)}</span>
           </div>
-          <div className="card-body">
-            <div className="d-flex justify-content-between mb-2">
-              <span>Subtotal:</span>
-              <span>S/ {subtotal.toFixed(2)}</span>
-            </div>
-            <div className="d-flex justify-content-between mb-2">
-              <span>Envío:</span>
-              <span>
-                {shippingCost > 0 ? `S/ ${shippingCost.toFixed(2)}` : "GRATIS"}
-              </span>
-            </div>
-            <div className="d-flex justify-content-between fw-bold">
-              <span>Total:</span>
-              <span>S/ {orderTotal.toFixed(2)}</span>
-            </div>
+          <div className="summary-item">
+            <span>Envío:</span>
+            <span>{shippingCost > 0 ? `S/ ${shippingCost.toFixed(2)}` : "GRATIS"}</span>
+          </div>
+          <div className="summary-total">
+            <span>Total:</span>
+            <span>S/ {orderTotal.toFixed(2)}</span>
           </div>
         </div>
 
         {selectedOrder.status === "PENDIENTE" && (
-          <div className="alert alert-info">
+          <div className="alert alert-warning">
             <FaInfoCircle className="me-2" />
-            Tu pedido está siendo procesado. Te notificaremos cuando entre en preparación.
+            <span className="small">Tu pedido está siendo procesado. Te notificaremos cuando entre en preparación.</span>
           </div>
         )}
 
         {selectedOrder.status === "PREPARACION" && (
           <div className="alert alert-primary">
             <FaInfoCircle className="me-2" />
-            Tu pedido está en preparación. Pronto estará listo para entrega.
+            <span className="small">Tu pedido está en preparación. Pronto estará listo para entrega.</span>
           </div>
         )}
 
         {selectedOrder.status === "TERMINADO" && (
           <div className="alert alert-success">
             <FaInfoCircle className="me-2" />
-            Tu pedido ha sido completado. ¡Gracias por tu compra!
+            <span className="small">Tu pedido ha sido completado. ¡Gracias por tu compra!</span>
           </div>
         )}
       </>
@@ -342,36 +325,349 @@ const MyOrders: React.FC<MyOrdersProps> = ({ show, onClose }) => {
   if (!show) return null;
 
   return (
-    <div
-      className="modal d-block"
-      tabIndex={-1}
-      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-    >
+    <>
+      {/* Estilos CSS optimizados para móviles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .my-orders-modal .modal-dialog {
+            max-width: 100% !important;
+            width: 100% !important;
+            height: 100vh !important;
+            margin: 0 !important;
+          }
+          
+          .my-orders-modal .modal-content {
+            height: 100vh !important;
+            border-radius: 0 !important;
+            border: none !important;
+          }
+          
+          .my-orders-modal .modal-body {
+            padding: 15px !important;
+            overflow-y: auto !important;
+            flex: 1 !important;
+          }
+          
+          .my-orders-modal .modal-header {
+            padding: 12px 15px !important;
+            flex-shrink: 0 !important;
+          }
+          
+          .my-orders-modal .modal-footer {
+            padding: 12px 15px !important;
+            flex-shrink: 0 !important;
+          }
+          
+          .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          
+          .order-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          }
+          
+          .order-card:hover {
+            background: #e9ecef;
+            border-color: #dc3545;
+          }
+          
+          .order-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+          }
+          
+          .order-info {
+            flex: 1;
+          }
+          
+          .order-number {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+            font-weight: 600;
+          }
+          
+          .order-date {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #6c757d;
+          }
+          
+          .order-status-price {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+          }
+          
+          .order-total {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #dc3545;
+          }
+          
+          .order-preview {
+            font-size: 0.8rem;
+            color: #6c757d;
+          }
+          
+          .order-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+          }
+          
+          .order-detail-title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+          }
+          
+          .order-info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+          }
+          
+          .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+          }
+          
+          .info-row:last-child {
+            margin-bottom: 0;
+          }
+          
+          .info-row span:first-child {
+            font-weight: 500;
+            flex-shrink: 0;
+            margin-right: 15px;
+          }
+          
+          .info-row span:last-child {
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+          }
+          
+          .products-section {
+            margin-bottom: 20px;
+          }
+          
+          .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #495057;
+          }
+          
+          .products-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          
+          .product-item {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+          }
+          
+          .product-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+            font-size: 0.7rem;
+            color: #6c757d;
+          }
+          
+          .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+          }
+          
+          .product-details {
+            flex: 1;
+            min-width: 0;
+          }
+          
+          .product-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+          }
+          
+          .product-quantity {
+            font-size: 0.8rem;
+            color: #6c757d;
+          }
+          
+          .product-price {
+            font-weight: 600;
+            color: #dc3545;
+            font-size: 0.9rem;
+            text-align: right;
+            flex-shrink: 0;
+          }
+          
+          .summary-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+          }
+          
+          .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+          }
+          
+          .summary-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 1rem;
+            padding-top: 8px;
+            border-top: 1px solid #dee2e6;
+            margin-top: 8px;
+          }
+          
+          .alert {
+            padding: 12px !important;
+            margin-bottom: 15px !important;
+            border-radius: 6px !important;
+          }
+        }
+        
+        @media (max-width: 576px) {
+          .my-orders-modal .modal-header h5 {
+            font-size: 1.1rem !important;
+          }
+          
+          .order-card {
+            padding: 12px !important;
+          }
+          
+          .order-info-card {
+            padding: 12px !important;
+          }
+          
+          .product-item {
+            padding: 10px !important;
+          }
+          
+          .summary-section {
+            padding: 12px !important;
+          }
+          
+          .info-row {
+            font-size: 0.85rem !important;
+          }
+          
+          .order-detail-header {
+            margin-bottom: 15px !important;
+          }
+        }
+        
+        @media (min-width: 769px) {
+          .my-orders-modal .modal-dialog {
+            max-width: 55% !important;
+          }
+          
+          .order-list {
+            display: block;
+          }
+          
+          .order-card {
+            background: transparent;
+            border: 1px solid #dee2e6;
+            border-radius: 0;
+            padding: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+          }
+          
+          .order-card:hover {
+            background: #f8f9fa;
+          }
+          
+          .order-card + .order-card {
+            border-top: none;
+          }
+          
+          .order-card:first-child {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+          }
+          
+          .order-card:last-child {
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+          }
+        }
+      `}</style>
+
       <div
-        className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
-        style={{ maxWidth: "55%" }}
+        className="modal d-block my-orders-modal"
+        tabIndex={-1}
+        style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
       >
-        <div className="modal-content border-0">
-          <div className="modal-header bg-danger text-white">
-            <h5 className="modal-title">Mis Pedidos</h5>
-            <button
-              type="button"
-              className="btn-close btn-close-white"
-              onClick={onClose}
-              aria-label="Close"
-            />
-          </div>
-          <div className="modal-body">
-            {selectedOrder ? renderOrderDetail() : renderOrdersList()}
-          </div>
-          <div className="modal-footer">
-            <button className="btn btn-outline-secondary" onClick={onClose}>
-              Cerrar
-            </button>
+        <div
+          className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"
+          style={{ maxWidth: "95%" }}
+        >
+          <div className="modal-content border-0">
+            <div className="modal-header bg-danger text-white">
+              <h5 className="modal-title">Mis Pedidos</h5>
+              <button
+                type="button"
+                className="btn-close btn-close-white"
+                onClick={onClose}
+                aria-label="Close"
+              />
+            </div>
+            <div className="modal-body">
+              {selectedOrder ? renderOrderDetail() : renderOrdersList()}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline-secondary" onClick={onClose}>
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

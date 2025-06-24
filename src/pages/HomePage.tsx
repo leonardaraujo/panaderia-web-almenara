@@ -42,6 +42,9 @@ const HomePage: React.FC = () => {
   // Nuevo estado para el paso inicial del carrito
   const [cartInitialStep, setCartInitialStep] = useState<"cart" | "checkout" | "confirmation" | "complete">("cart");
 
+  // Estado para controlar si la imagen del banner se cargó
+  const [bannerImageLoaded, setBannerImageLoaded] = useState<boolean>(false);
+
   // Efecto para redirigir al checkout después del login/registro
   useEffect(() => {
     if (isAuthenticated && redirectToCheckout && cartItems.length > 0) {
@@ -126,22 +129,31 @@ const HomePage: React.FC = () => {
 
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-light bg-light">
+      {/* Navbar responsiva */}
+      <nav className="navbar navbar-expand-lg navbar-light bg-light sticky-top">
         <div className="container">
-          <Link className="navbar-brand me-5" to="/">
-            <img src={mariaLogo} alt="María Almenara" height="40" />
+          <Link className="navbar-brand me-3 me-lg-5" to="/">
+            <img 
+              src={mariaLogo} 
+              alt="María Almenara" 
+              height="40" 
+              className="d-inline-block align-text-top"
+            />
           </Link>
           <button
             className="navbar-toggler"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
           >
             <span className="navbar-toggler-icon"></span>
           </button>
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav me-auto">
-              <li className="nav-item mx-3">
+              <li className="nav-item mx-1 mx-lg-3">
                 <a
                   className="nav-link"
                   href="#"
@@ -153,7 +165,7 @@ const HomePage: React.FC = () => {
                   Inicio
                 </a>
               </li>
-              <li className="nav-item mx-3">
+              <li className="nav-item mx-1 mx-lg-3">
                 <a
                   className="nav-link"
                   href="#catalogo"
@@ -167,7 +179,7 @@ const HomePage: React.FC = () => {
                   Productos
                 </a>
               </li>
-              <li className="nav-item mx-3">
+              <li className="nav-item mx-1 mx-lg-3">
                 <a
                   className="nav-link"
                   href="#footer"
@@ -182,26 +194,30 @@ const HomePage: React.FC = () => {
                 </a>
               </li>
               {isAdmin && (
-                <li className="nav-item mx-3">
+                <li className="nav-item mx-1 mx-lg-3">
                   <Link className="nav-link text-danger" to="/dashboard">
                     <FaTachometerAlt className="me-1" /> Dashboard
                   </Link>
                 </li>
               )}
             </ul>
-            <div className="d-flex align-items-center">
+            
+            {/* Controles de usuario - responsivos */}
+            <div className="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-2 mt-3 mt-lg-0">
               {isAuthenticated ? (
-                <div className="dropdown me-3">
+                <div className="dropdown">
                   <button
-                    className="btn btn-danger dropdown-toggle"
+                    className="btn btn-danger dropdown-toggle w-100"
                     type="button"
                     id="userDropdown"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
-                    <FaUser className="me-2" /> {userName}
+                    <FaUser className="me-2" /> 
+                    <span className="d-none d-sm-inline">{userName}</span>
+                    <span className="d-inline d-sm-none">Perfil</span>
                   </button>
-                  <ul className="dropdown-menu" aria-labelledby="userDropdown">
+                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                     {/* Solo mostrar Mi Perfil y Mis Pedidos si NO es admin */}
                     {!isAdmin && (
                       <>
@@ -246,7 +262,7 @@ const HomePage: React.FC = () => {
                 </div>
               ) : (
                 <button
-                  className="btn btn-danger me-3"
+                  className="btn btn-danger"
                   onClick={() => {
                     setIsLoginForm(true);
                     setShowLoginModal(true);
@@ -263,9 +279,12 @@ const HomePage: React.FC = () => {
                   onClick={() => setShowCart(true)}
                 >
                   <FaShoppingCart size={20} />
-                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                    {totalItems}
-                  </span>
+                  <span className="d-none d-sm-inline ms-2">Carrito</span>
+                  {totalItems > 0 && (
+                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                      {totalItems}
+                    </span>
+                  )}
                 </button>
               )}
               
@@ -344,75 +363,168 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
-      <div className="banner-container position-relative">
-        {/* Overlay oscuro en toda la imagen */}
+      {/* Banner optimizado para móviles */}
+      <div 
+        className="banner-container position-relative"
+        style={{
+          minHeight: "280px", // Reducido para móviles
+          height: "35vh", // Altura menor en móviles
+          maxHeight: "450px", // Altura máxima reducida
+          overflow: "hidden"
+        }}
+      >
+        {/* Overlay oscuro */}
         <div
+          className="position-absolute top-0 start-0 w-100 h-100"
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(0,0,0,0.6)",
-            zIndex: 1,
+            backgroundColor: "rgba(0,0,0,0.65)",
+            zIndex: 2,
           }}
         ></div>
 
+        {/* Imagen del banner optimizada */}
         <img
           src={bannerImage}
           alt="María Almenara banner"
-          className="img-fluid w-100"
-          style={{ maxHeight: "500px", objectFit: "cover" }}
+          className="position-absolute top-0 start-0 w-100 h-100"
+          style={{ 
+            objectFit: "cover",
+            objectPosition: "center 30%", // Mejor posición para móviles
+            opacity: bannerImageLoaded ? 1 : 0,
+            transition: "opacity 0.3s ease-in-out"
+          }}
+          onLoad={() => setBannerImageLoaded(true)}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            // Imagen de fallback si no carga
+            target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzM0NDA0ZSIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZW48L3RleHQ+PC9zdmc+";
+            setBannerImageLoaded(true);
+          }}
         />
+
+        {/* Fondo de color como fallback */}
+        {!bannerImageLoaded && (
+          <div 
+            className="position-absolute top-0 start-0 w-100 h-100"
+            style={{
+              background: "linear-gradient(135deg, #dc3545 0%, #c82333 100%)",
+              zIndex: 1
+            }}
+          />
+        )}
+
+        {/* Contenido del banner - optimizado para móviles */}
         <div
           className="position-absolute top-50 start-50 translate-middle text-center"
           style={{
-            padding: "30px",
-            width: "80%",
-            maxWidth: "700px",
-            zIndex: 2,
+            padding: "15px",
+            width: "95%",
+            maxWidth: "600px",
+            zIndex: 3,
           }}
         >
           <h1
-            className="display-4 fw-bold text-white"
-            style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
+            className="fw-bold text-white mb-2 mb-md-3"
+            style={{ 
+              textShadow: "2px 2px 4px rgba(0,0,0,0.9)",
+              fontSize: "clamp(1.5rem, 6vw, 2.5rem)", // Tamaño más apropiado para móviles
+              lineHeight: "1.2"
+            }}
           >
             Bienvenidos a María Almenara
           </h1>
           <p
-            className="fs-5 text-white"
-            style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.9)" }}
+            className="text-white mb-3 mb-md-4"
+            style={{ 
+              textShadow: "1px 1px 2px rgba(0,0,0,0.9)",
+              fontSize: "clamp(0.9rem, 3.5vw, 1.1rem)", // Tamaño más pequeño
+              lineHeight: "1.3"
+            }}
           >
             Los mejores productos horneados frescos todos los días
           </p>
 
-          {/* Botón para acceder al Dashboard */}
+          {/* Botón para acceder al Dashboard - más pequeño en móviles */}
           {isAdmin && (
-            <Link to="/dashboard" className="btn btn-danger btn-lg mt-3">
+            <Link 
+              to="/dashboard" 
+              className="btn btn-danger"
+              style={{ 
+                fontSize: "clamp(0.85rem, 2.5vw, 1rem)",
+                padding: "8px 16px"
+              }}
+            >
               <FaTachometerAlt className="me-2" />
-              Acceder al Dashboard
+              <span className="d-none d-sm-inline">Acceder al </span>Dashboard
             </Link>
           )}
         </div>
       </div>
 
-      {/* Catálogo de Productos - Ahora es un componente separado */}
+      {/* Catálogo de Productos con estilos mejorados para móviles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .btn-group .btn {
+            font-size: 0.85rem !important;
+            padding: 10px 12px !important;
+            border-radius: 8px !important;
+            margin: 2px !important;
+            min-width: auto !important;
+            white-space: nowrap;
+          }
+          
+          .btn-group {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            justify-content: center !important;
+            border-radius: 0 !important;
+          }
+          
+          .btn-group > .btn:not(:first-child) {
+            margin-left: 0 !important;
+            border-top-left-radius: 8px !important;
+            border-bottom-left-radius: 8px !important;
+          }
+          
+          .btn-group > .btn:not(:last-child) {
+            border-top-right-radius: 8px !important;
+            border-bottom-right-radius: 8px !important;
+          }
+        }
+        
+        @media (max-width: 576px) {
+          .btn-group .btn {
+            font-size: 0.8rem !important;
+            padding: 8px 10px !important;
+            flex: 1 1 auto !important;
+            max-width: calc(50% - 4px) !important;
+          }
+          
+          .container {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+        }
+      `}</style>
+
       <ProductCatalog onAddToCart={addToCart} />
 
+      {/* Footer responsive */}
       <footer id="footer" className="bg-dark text-white mt-5 py-4">
         <div className="container">
-          <div className="row">
-            <div className="col-md-6">
+          <div className="row gy-3">
+            <div className="col-md-6 text-center text-md-start">
               <h5>María Almenara</h5>
-              <p>Horneando tradición desde 2017</p>
+              <p className="mb-0">Horneando tradición desde 2017</p>
             </div>
-            <div className="col-md-6 text-md-end">
-              <p>Calle Principal #123, Ciudad</p>
-              <p>Teléfono: (123) 456-7890</p>
+            <div className="col-md-6 text-center text-md-end">
+              <p className="mb-1">Calle Principal #123, Ciudad</p>
+              <p className="mb-0">Teléfono: (123) 456-7890</p>
             </div>
           </div>
-          <div className="text-center mt-3">
-            <p>
+          <div className="text-center mt-3 pt-3 border-top border-secondary">
+            <p className="mb-0">
               &copy; {new Date().getFullYear()} María Almenara. Todos los
               derechos reservados.
             </p>
