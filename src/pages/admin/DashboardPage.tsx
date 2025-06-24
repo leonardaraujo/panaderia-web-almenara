@@ -17,7 +17,6 @@ import {
   FaUser,
   FaCalendar,
   FaBox,
-  FaBars,
 } from "react-icons/fa";
 import mariaLogo from "../../assets/maria_logo.svg";
 import useUserStore from "../../../store/userStore";
